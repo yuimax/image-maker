@@ -1,4 +1,7 @@
+import os
+import pathlib
 import shlex
+import sys
 
 from PIL import Image
 
@@ -40,9 +43,7 @@ class ScriptEngine:
         @self.register("load")
         def cmd_load(img_ref, path):
             if not isinstance(img_ref, Reference):
-                raise ValueError(
-                    "loadコマンドの第1引数は参照渡し(&変数名)で指定します"
-                )
+                raise ValueError("loadコマンドの第1引数は参照渡し(&変数名)で指定します")
 
             # 画像を読み込んで、参照先の変数にセット
             img = Image.open(path)
@@ -56,9 +57,7 @@ class ScriptEngine:
                 img = img.get()
 
             if not isinstance(img, Image.Image):
-                raise ValueError(
-                    "saveコマンドの第1引数はImageオブジェクトを指定します"
-                )
+                raise ValueError("saveコマンドの第1引数はImageオブジェクトを指定します")
 
             img.save(path)
             print(f"[Engine] 画像を保存しました: {path}")
@@ -134,16 +133,26 @@ class ScriptEngine:
                     raise ValueError(f"未知のコマンドです: {cmd_name}")
 
             except Exception as e:
-                print(f"実行エラー (行 {line_num}) [{line}] -> {e}")
+                print(f"エラーで中断 (行 {line_num}) [{line}] -> {e}")
+                exit(1)
 
 
 # ==========================================
-# カスタムコマンドの追加テンプレート
+# カスタムコマンドの追加
 # ==========================================
 engine = ScriptEngine()
 
 
-# 例: 参照渡しの変数を書き換えるコマンド（画像をリサイズして変数を上書きする）
+# 単純な出力コマンド
+@engine.register("echo")
+def cmd_echo(*args):
+    # Referenceオブジェクトが混ざっていたら値を取り出す
+    vals = [a.get() if isinstance(a, Reference) else a for a in args]
+    print("echo>", *vals)
+
+
+# 参照渡しの変数を書き換えるコマンドの例
+# （画像をリサイズして変数を上書きする）
 @engine.register("resize-self")
 def cmd_resize_self(img_ref, width, height):
     if not isinstance(img_ref, Reference):
@@ -155,22 +164,19 @@ def cmd_resize_self(img_ref, width, height):
     print(f"[Engine] 画像を {width}x{height} にリサイズしました")
 
 
-# 例: 単純な出力コマンド
-@engine.register("echo")
-def cmd_echo(*args):
-    # Referenceオブジェクトが混ざっていたら値を取り出す
-    vals = [a.get() if isinstance(a, Reference) else a for a in args]
-    print("echo>", *vals)
+# ディレクトリの作成、すでに存在する場合はなにもしない
+@engine.register("mkdir")
+def cmd_mkdir(dir_name):
+    path = pathlib.Path(dir_name)
+    if not path.is_dir():
+        path.mkdir(parents=True, exist_ok=True)
+        print(f"[Engine] フォルダ {dir_name} を作りました")
 
 
-# ==========================================
-# 実行テスト
-# ==========================================
+# ===========================================
+# コマンドラインで指定されたスクリプトを実行
+# ===========================================
 if __name__ == "__main__":
-    import os
-    import pathlib
-    import sys
-
     if len(sys.argv) < 2:
         myname = os.path.basename(__file__)
         print(f"Usage: python {myname} <script-file>")
