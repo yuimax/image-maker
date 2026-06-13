@@ -1,4 +1,0 @@
-x = 100
-y = 7
-z = min(x, y)
-echo x y z
