@@ -21,7 +21,7 @@ Usage: python image-maker.py script-file
 ```
 - 変数に式の値を格納する
 - 変数名は Python の変数名として有効な名前
-- 式の値として次のデータ型を代入できる
+- 式の値は次のデータ型のいずれか
 	* 数値
 	* 文字列
 	* PIL.Image形式の画像
