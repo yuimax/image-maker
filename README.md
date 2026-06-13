@@ -46,7 +46,7 @@ echo 引数1 引数2 ...
 	* 文字列
 -	出力フォーマットを指定したい場合は、変数に代入して出力する
 	```
-	msg = f"答={result:6.2f}"
+	msg = f"result={result:6.2f}"
 	echo msg
 	```
 
